@@ -1,10 +1,24 @@
 import { GetStaticProps } from 'next';
+import Link from 'next/link';
 import Head from 'next/head';
-import { getPrismicClient } from '../../services/prismic';
-import styles from './styles.module.scss'
-import Prismic from '@prismicio/client'
+import styles from './styles.module.scss';
+import Prismic from '@prismicio/client';
+import { RichText } from 'prismic-dom';
 
-export default function Posts(){
+import { getPrismicClient } from '../../services/prismic';
+
+interface Post {
+    slug: string;
+    title: string;
+    excerpt: string;
+    updatedAt: string;
+}
+
+interface PostProps {
+    posts: Post[];
+}
+
+export default function Posts({ posts }: PostProps) {
     return (
         <>
             <Head>
@@ -12,18 +26,21 @@ export default function Posts(){
             </Head>
             <main className={styles.container}>
                 <div className={styles.posts}>
-                    <a href="">
-                        <time>
-                            13 de março de 2020
-                        </time>
-                        <strong>
-                            O que é o React?
-                        </strong>
-                        <p>
-                            Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                            Quisquam, quidem.
-                        </p>
-                    </a>
+                    {posts.map(post => (
+                        <Link href={`/posts/${post.slug}`}>
+                            <a key={post.slug} href="">
+                                <time>
+                                    {post.updatedAt}
+                                </time>
+                                <strong>
+                                    {post.title}
+                                </strong>
+                                <p>
+                                    {post.excerpt}
+                                </p>
+                            </a>
+                        </Link>
+                    ))}
                 </div>
             </main>
         </>
@@ -37,14 +54,26 @@ export const getStaticProps: GetStaticProps = async () => {
         Prismic.predicates.at('document.type', 'post')
     ], {
         fetch: ['posts.title', 'posts.content'],
-        pageSize: 10000,
+        pageSize: 100,
     }
-        
+
     )
 
-    console.log(response)
+    // console.log('response is ' + JSON.stringify(response, null, 2))
 
+    const posts = response.results.map(post => {
+        return {
+            slug: post.uid,
+            title: RichText.asText(post.data.title),
+            excerpt: post.data.content.find((content: any) => content.type === 'paragraph')?.text ?? '',
+            updatedAt: new Date(post.last_publication_date).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+            })
+        }
+    })
     return {
-        props: { response }
+        props: { posts }
     }
 }

@@ -25,18 +25,29 @@ export async function saveSubscription(
   };
   console.log(createAction);
   if (createAction) {
-    await fauna.query(
-      q.Create(q.Collection("subscriptions"), { data: subscriptionData })
-    );
+    try{
+      await fauna.query(
+        q.Create(q.Collection("subscriptions"), { data: subscriptionData })
+      );
+    }
+    catch(e){
+      console.log('this is the error collection ' + e);
+    }
+    
   } else {
-    await fauna.query(
-      q.Replace(
-        q.Select(
-          "ref",
-          q.Get(q.Match(q.Index("subscription_by_id"), subscriptionId))
-        ),
-        { data: subscriptionData }
-      )
-    );
+    try {
+      await fauna.query(
+        q.Replace(
+          q.Select(
+            "ref",
+            q.Get(q.Match(q.Index("subscription_by_id"), subscriptionId))
+          ),
+          { data: subscriptionData }
+        )
+      );
+    } catch (e) {
+      console.log('this is the error replace ' + e);
+    }
+    
   }
 }

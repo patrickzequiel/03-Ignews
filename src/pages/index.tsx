@@ -14,7 +14,6 @@ interface HomeProps {
 }
 
 export default function Home({ product }: HomeProps) {
-  console.log('Isso é o price ', product)
 
   return (
     <>
